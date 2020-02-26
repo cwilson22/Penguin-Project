@@ -3,6 +3,19 @@ import sys
 from pygame import FULLSCREEN
 
 
+class Factory:
+    def __init__(self, x, y, num_sprites, name):
+        self.sprites = []
+        for i in range(num_sprites):
+            self.sprites.append(pygame.image.load('sprites/' + name + '/sprite_' + str(i) + '.png'))
+        self.x = x
+        self.y = y
+        self.num_product = 0
+
+    def produce(self):
+        self.num_product += 1
+
+
 class Penguin:
     def __init__(self, x, y, num_sprites):
         self.front_sprites = []
@@ -38,9 +51,10 @@ class Penguin:
 clock = pygame.time.Clock()
 GRASS = pygame.image.load('sprites/grass.png')
 PLAYER = Penguin(0, 0, 4)
-GRIDSIZE = 128
+GRID_SIZE = 128
+WHEAT = Factory(90, 90, 1, "wheat_factory")
 screen = pygame.display.set_mode((0, 0), FULLSCREEN)
-game_surface = pygame.Surface((GRIDSIZE, GRIDSIZE))
+game_surface = pygame.Surface((GRID_SIZE, GRID_SIZE))
 screen_width = screen.get_width()
 screen_height = screen.get_height()
 smallest_side = min(screen_width, screen_height)
@@ -51,6 +65,8 @@ def blit_screen(game_height):
     for x in range(0, game_height, 32):
         for y in range(0, game_height, 32):
             game_surface.blit(GRASS, (x, y))
+
+    game_surface.blit(WHEAT.sprites[0], (WHEAT.x, WHEAT.y))
 
     if PLAYER.y_dir == 0 and PLAYER.x_dir == 0:
         if PLAYER.facing_up:
@@ -71,7 +87,7 @@ def blit_screen(game_height):
 
 
 if __name__ == '__main__':
-    blit_screen(GRIDSIZE)
+    blit_screen(GRID_SIZE)
     while 1:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -104,5 +120,5 @@ if __name__ == '__main__':
                 elif event.key == pygame.K_d:
                     PLAYER.x_dir += 1
         PLAYER.move()
-        blit_screen(GRIDSIZE)
+        blit_screen(GRID_SIZE)
         clock.tick(10)

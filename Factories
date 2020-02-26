@@ -1,0 +1,3 @@
+factories = {
+    'wheat_factory': {'max_product': 999, 'build_cost': 130, 'cost_type': 'gold'}
+}
