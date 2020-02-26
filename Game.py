@@ -11,11 +11,11 @@ class Penguin:
         self.still_front_sprites = []
         self.still_back_sprites = []
         for i in range(num_sprites):
-            self.front_sprites.append(pygame.image.load('images/penguin_front_walk/sprite_' + str(i) + '.png'))
-            self.left_sprites.append(pygame.image.load('images/penguin_left_walk/sprite_' + str(i) + '.png'))
-            self.back_sprites.append(pygame.image.load('images/penguin_back_walk/sprite_' + str(i) + '.png'))
-            self.still_front_sprites.append(pygame.image.load('images/penguin_front_still/sprite_' + str(i) + '.png'))
-            self.still_back_sprites.append(pygame.image.load('images/penguin_back_still/sprite_' + str(i) + '.png'))
+            self.front_sprites.append(pygame.image.load('sprites/penguin_front_walk/sprite_' + str(i) + '.png'))
+            self.left_sprites.append(pygame.image.load('sprites/penguin_left_walk/sprite_' + str(i) + '.png'))
+            self.back_sprites.append(pygame.image.load('sprites/penguin_back_walk/sprite_' + str(i) + '.png'))
+            self.still_front_sprites.append(pygame.image.load('sprites/penguin_front_still/sprite_' + str(i) + '.png'))
+            self.still_back_sprites.append(pygame.image.load('sprites/penguin_back_still/sprite_' + str(i) + '.png'))
         self.x = x
         self.y = y
         self.x_dir = 0
@@ -36,7 +36,7 @@ class Penguin:
 
 
 clock = pygame.time.Clock()
-GRASS = pygame.image.load('images/grass.png')
+GRASS = pygame.image.load('sprites/grass.png')
 PLAYER = Penguin(0, 0, 4)
 GRIDSIZE = 128
 screen = pygame.display.set_mode((0, 0), FULLSCREEN)
