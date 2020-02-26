@@ -51,19 +51,19 @@ class Penguin:
 clock = pygame.time.Clock()
 GRASS = pygame.image.load('sprites/grass.png')
 PLAYER = Penguin(0, 0, 4)
-GRID_SIZE = 128
+GRID_SIZE = (160, 128)
 WHEAT = Factory(90, 90, 1, "wheat_factory")
 screen = pygame.display.set_mode((0, 0), FULLSCREEN)
-game_surface = pygame.Surface((GRID_SIZE, GRID_SIZE))
+game_surface = pygame.Surface(GRID_SIZE)
 screen_width = screen.get_width()
 screen_height = screen.get_height()
-smallest_side = min(screen_width, screen_height)
-screen_surface = pygame.Surface((smallest_side, smallest_side))
+smallest_side = min(4*screen_width/5, screen_height)
+screen_surface = pygame.Surface((5*smallest_side//4, smallest_side))
 
 
 def blit_screen(game_height):
-    for x in range(0, game_height, 32):
-        for y in range(0, game_height, 32):
+    for x in range(0, game_height[0], 32):
+        for y in range(0, game_height[1], 32):
             game_surface.blit(GRASS, (x, y))
 
     game_surface.blit(WHEAT.sprites[0], (WHEAT.x, WHEAT.y))
@@ -80,9 +80,9 @@ def blit_screen(game_height):
     else:
         game_surface.blit(PLAYER.front_sprites[PLAYER.sprite_frame], (PLAYER.x, PLAYER.y))
 
-    pygame.transform.scale(game_surface, (smallest_side, smallest_side), screen_surface)
+    pygame.transform.scale(game_surface, (5*smallest_side//4, smallest_side), screen_surface)
 
-    screen.blit(screen_surface, ((screen_width - smallest_side) // 2, (screen_height - smallest_side) // 2))
+    screen.blit(screen_surface, ((screen_width - 5*smallest_side/4) // 2, (screen_height - smallest_side) // 2))
     pygame.display.flip()
 
 
