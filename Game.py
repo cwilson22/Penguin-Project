@@ -128,8 +128,9 @@ def main():
     blit_screen(GRID_SIZE, 0)
     simple_menu = pygameMenu.TextMenu(screen, window_width=screen_width, window_height=screen_height,
                                       font=pygameMenu.font.FONT_8BIT, font_color=(255, 255, 255), enabled=False,
-                                      font_size=20, title='Test', bgfun=bg_pass, menu_alpha=100, onclose=pygameMenu.events.CLOSE,
-                                      option_shadow=False, menu_color=(0, 0, 0), menu_width=600, menu_height=600)
+                                      font_size=20, title='Test', bgfun=bg_pass, menu_alpha=100,
+                                      onclose=pygameMenu.events.CLOSE, option_shadow=False, menu_color=(0, 0, 0),
+                                      menu_width=600, menu_height=600)
     simple_menu.set_fps(15)
     simple_menu.add_option('Close', pygameMenu.events.CLOSE)
     simple_menu.add_option('Exit', pygameMenu.events.EXIT)
