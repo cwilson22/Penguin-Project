@@ -75,8 +75,10 @@ def bg_pass():
 pygame.init()
 GAME_STATE = 0
 clock = pygame.time.Clock()
-GRASS = pygame.image.load('sprites/tiles/tile_2.png')
-FISH_HUT = pygame.image.load('sprites/tiles/tile_1.png')
+GRASS = pygame.image.load('sprites/tiles/tile_dirt.png')
+TILES = []
+for i in range(1, 6):
+    TILES.append(pygame.image.load('sprites/tiles/tile_' + str(i) + '.png'))
 PLAYER = Penguin(0, 0, 4)
 GRID_SIZE = (160, 128)
 
@@ -96,7 +98,8 @@ def blit_screen(game_height, animation_timer):
     for x in range(0, game_height[0], 32):
         for y in range(0, game_height[1], 32):
             game_surface.blit(GRASS, (x, y))
-    game_surface.blit(FISH_HUT, (0, 0))
+    for i in range(1, 6):
+        game_surface.blit(TILES[i-1], (32*(i-1), 0))
 
     for game_object in OBJECTS:
         game_object.animate(animation_timer)
