@@ -1,5 +1,6 @@
 import constants
 import pygame
+import json
 
 
 class Penguin:
@@ -18,6 +19,8 @@ class Penguin:
             self.still_back_sprites.append(pygame.image.load('sprites/penguin_back_still/sprite_' + str(i) + '.png'))
         self.x = constants.penguin['start_x']
         self.y = constants.penguin['start_y']
+        self.x_offset = constants.penguin['center_px_x_offset']
+        self.y_offset = constants.penguin['center_px_y_offset']
         self.x_dir = 0
         self.y_dir = 0
         self.facing_up = False
@@ -32,6 +35,10 @@ class Penguin:
         if self.animation_count > 3:
             self.animation_count = 0
             self.sprite_frame = (self.sprite_frame + 1) % self.num_sprites
+
+    def calculate_tile(self):
+        return (self.x + self.x_offset) // constants.game['tile_size'] + constants.game['num_tiles'][0] \
+               * ((self.y + self.y_offset) // constants.game['tile_size'])
 
 
 class Factory:
@@ -70,3 +77,21 @@ class Factory:
     def animate(self, animation_count):
         if self.on:
             self.sprite_frame = (animation_count // self.animation_rate) % self.num_sprites
+
+
+class ResourceManager:
+    def __init__(self):
+        self.resources = []
+        with open('savestate.txt', 'r') as f:
+            x = json.load(f)
+        for i in range(len(constants.resources)):
+            self.resources.append(x[str(i)])
+
+    def increase(self, resource, amount):
+        self.resources[resource] += amount
+
+    def decrease(self, resource, amount):
+        self.resources[resource] -= amount
+
+    def save(self):
+        pass
