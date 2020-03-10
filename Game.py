@@ -77,6 +77,24 @@ def blit_construction_menu():
         for y in range(2):
             GAME_SURFACE.blit(CONSTRUCTION_MENU[x+2*y], (2*TILE_SIZE + x*TILE_SIZE, TILE_SIZE + y*TILE_SIZE))
 
+    for fact in constants.factories.values():
+        if PLAYER.calculate_tile() == fact['grid_pos']:
+            build1 = fact['cost_type1']
+            build2 = fact['cost_type2']
+            cost1 = fact['build_cost1']
+            cost2 = fact['build_cost2']
+            for i in constants.construct_menu['resources']:
+                if build1 == i:
+                    GAME_SURFACE.blit(pygame.image.load('text/construct/numbers/' + str(cost1) + '.png'),
+                                      (constants.construct_menu['offset_x'], constants.construct_menu['offset'+str(i)]))
+                elif build2 == i:
+                    GAME_SURFACE.blit(pygame.image.load('text/construct/numbers/' + str(cost2) + '.png'),
+                                      (constants.construct_menu['offset_x'], constants.construct_menu['offset'+str(i)]))
+                else:
+                    GAME_SURFACE.blit(pygame.image.load('text/construct/numbers/0.png'),
+                                      (constants.construct_menu['offset_x'], constants.construct_menu['offset'+str(i)]))
+            break
+
     pygame.transform.scale(GAME_SURFACE, (NUM_TILES[0] * SMALLEST_SIDE // NUM_TILES[1], SMALLEST_SIDE), SCREEN_SURFACE)
 
     SCREEN.blit(SCREEN_SURFACE, ((SCREEN_WIDTH - NUM_TILES[0] * SMALLEST_SIDE / NUM_TILES[1]) // 2,
@@ -129,6 +147,14 @@ def main():
                             if PLAYER.calculate_tile() == ob.grid_pos:
                                 ob.flip_switch()
                 elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_w:
+                        PLAYER.y_dir -= 1
+                    elif event.key == pygame.K_s:
+                        PLAYER.y_dir += 1
+                    elif event.key == pygame.K_a:
+                        PLAYER.x_dir -= 1
+                    elif event.key == pygame.K_d:
+                        PLAYER.x_dir += 1
                     if event.key == pygame.K_q:
                         simple_menu.enable()
                         PLAYER.x_dir = 0
@@ -138,26 +164,19 @@ def main():
                         PLAYER.x_dir = 0
                         PLAYER.y_dir = 0
 
-                    if event.key == pygame.K_w:
-                        PLAYER.y_dir -= 1
-                    elif event.key == pygame.K_s:
-                        PLAYER.y_dir += 1
-                    elif event.key == pygame.K_a:
-                        PLAYER.x_dir -= 1
-                    elif event.key == pygame.K_d:
-                        PLAYER.x_dir += 1
-
             PLAYER.move()
             blit_screen(GRID_SIZE, animation_frame)
             simple_menu.mainloop()
             animation_frame += 1
             if animation_frame > ANIMATION_MAX_CT:
                 animation_frame = 0
+            if GAME_STATE == 1:
+                blit_construction_menu()
 
         elif GAME_STATE == 1:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_e:
                         GAME_STATE = 0
                     if event.key == pygame.K_SPACE:
                         for fact in constants.factories.values():
@@ -166,12 +185,11 @@ def main():
                                 build2 = fact['cost_type2']
                                 cost1 = fact['build_cost1']
                                 cost2 = fact['build_cost2']
-                                if RESOURCES.resources[build1] > cost1 and RESOURCES.resources[build2] > cost2:
+                                if RESOURCES.resources[build1] >= cost1 and RESOURCES.resources[build2] >= cost2:
                                     RESOURCES.resources[build1] -= cost1
                                     RESOURCES.resources[build2] -= cost2
                                 break
                         GAME_STATE = 0
-            blit_construction_menu()
         CLOCK.tick(FPS)
 
 

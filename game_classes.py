@@ -29,8 +29,10 @@ class Penguin:
         self.animation_count = 0
 
     def move(self):
-        self.x += self.x_dir
-        self.y += self.y_dir
+        if (self.x_dir < 0 and self.x + 5 > 0) or (self.x_dir > 0 and self.x + 15 < constants.game['grid_size'][0]):
+            self.x += self.x_dir
+        if (self.y_dir < 0 and self.y > 5) or (self.y_dir > 0 and self.y + 15 < constants.game['grid_size'][1] - 5):
+            self.y += self.y_dir
         self.animation_count += 1
         if self.animation_count > 3:
             self.animation_count = 0
