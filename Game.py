@@ -15,10 +15,15 @@ pygame.mouse.set_visible(False)
 CLOCK = pygame.time.Clock()
 NUM_TILES = constants.game['num_tiles']
 GRID_SIZE = constants.game['grid_size']
-GRASS = pygame.image.load('sprites/tiles/tile_dirt.png')
+GRASS = pygame.image.load('sprites/tiles/tile_grass.png')
+DIRT = pygame.image.load('sprites/tiles/tile_dirt.png')
 TILE_SIZE = constants.game['tile_size']
 ANIMATION_MAX_CT = constants.game['animate_ct']
 FPS = constants.game['game_fps']
+
+# Initialize all images and graphics
+DIRT_TILES = constants.game['dirt_spots']
+SPECIAL_TILES = constants.game['special']
 OVERLAY_NUMBERS_X = [constants.game['numberX_locations_top'], constants.game['numberX_locations_bottom']]
 OVERLAY_NUMBERS_Y = [constants.game['numberY_location_top'], constants.game['numberY_location_bottom']]
 OVERLAY_RESOURCES = [constants.game['overlay1_resources'], constants.game['overlay2_resources']]
@@ -26,7 +31,7 @@ OVERLAYS = []
 for k in range(12):
     OVERLAYS.append(pygame.image.load('sprites/overlays/overlay_' + str(k) + '.png'))
 TILES = []
-for k in range(1, 6):
+for k in SPECIAL_TILES.keys():
     TILES.append(pygame.image.load('sprites/tiles/tile_' + str(k) + '.png'))
 CONSTRUCTION_MENU = []
 for k in range(4):
@@ -37,8 +42,9 @@ for k in range(10):
 
 # Initialize player and buildings
 PLAYER = game_classes.Penguin()
-GAME_OBJECTS = [game_classes.Factory('cereal_factory')]
+GAME_OBJECTS = []
 RESOURCES = game_classes.ResourceManager()
+FISHING = game_classes.Fishing()
 with open('savestate.txt', 'r') as f:
     save = json.load(f)
 for k in range(len(constants.resources)):
@@ -52,6 +58,10 @@ SCREEN_WIDTH = SCREEN.get_width()
 SCREEN_HEIGHT = SCREEN.get_height()
 SMALLEST_SIDE = min(NUM_TILES[1] * SCREEN_WIDTH / NUM_TILES[0], SCREEN_HEIGHT)
 SCREEN_SURFACE = pygame.Surface((NUM_TILES[0] * SMALLEST_SIDE // NUM_TILES[1], SMALLEST_SIDE))
+
+
+def calc_xy(grid_pos):
+    return TILE_SIZE * (grid_pos % 6), TILE_SIZE * (grid_pos // 6)
 
 
 def blit_levels():
@@ -72,9 +82,9 @@ def blit_levels():
 def blit_overlay():
     for t in range(len(OVERLAY_RESOURCES)):
         for s in range(len(OVERLAY_RESOURCES[t])):
-            GAME_SURFACE.blit(OVERLAYS[s + 6*t], (TILE_SIZE * s, t * 121))
+            GAME_SURFACE.blit(OVERLAYS[s + 6*t], (TILE_SIZE * s, t * 96))
             ct = 0
-            x = RESOURCES.resources[OVERLAY_RESOURCES[t][s]]
+            x = int(RESOURCES.resources[OVERLAY_RESOURCES[t][s]])
             if x == 0:
                 GAME_SURFACE.blit(NUMS[0], (OVERLAY_NUMBERS_X[t][s], OVERLAY_NUMBERS_Y[t]))
             else:
@@ -84,12 +94,15 @@ def blit_overlay():
                     ct += 1
 
 
-def blit_screen(game_size, animation_timer):
-    for x in range(0, game_size[0], TILE_SIZE):
-        for y in range(0, game_size[1], TILE_SIZE):
-            GAME_SURFACE.blit(GRASS, (x, y))
-    # for i in range(5):
-        # GAME_SURFACE.blit(TILES[i], (32 * i, 0))
+def blit_screen(animation_timer):
+    for x in range(NUM_TILES[0]):
+        for y in range(NUM_TILES[1]):
+            if 6 * y + x in DIRT_TILES:
+                GAME_SURFACE.blit(DIRT, (TILE_SIZE * x, TILE_SIZE * y))
+            elif 6 * y + x in SPECIAL_TILES.keys():
+                GAME_SURFACE.blit(TILES[SPECIAL_TILES[6 * y + x]], (TILE_SIZE * x, TILE_SIZE * y))
+            else:
+                GAME_SURFACE.blit(GRASS, (TILE_SIZE * x, TILE_SIZE * y))
 
     for game_object in GAME_OBJECTS:
         game_object.animate(animation_timer)
@@ -97,6 +110,9 @@ def blit_screen(game_size, animation_timer):
             GAME_SURFACE.blit(game_object.on_sprites[game_object.sprite_frame], (game_object.x, game_object.y))
         else:
             GAME_SURFACE.blit(game_object.off_sprites[game_object.sprite_frame], (game_object.x, game_object.y))
+
+    for to_build in RESOURCES.can_build:
+        GAME_SURFACE.blit(RESOURCES.sign, (calc_xy(to_build)[0] + 2, calc_xy(to_build)[1] + 22))
 
     blit_levels()
 
@@ -145,6 +161,16 @@ def blit_construction_menu():
     pygame.display.flip()
 
 
+def transfer_product():
+    for ob in GAME_OBJECTS:
+        if ob.product1 > 0:
+            RESOURCES.resources[ob.product1_type] += ob.product1
+            ob.product1 = 0
+        if ob.product2 > 0:
+            RESOURCES.resources[ob.product2_type] += ob.product2
+            ob.product2 = 0
+
+
 def bg_pass():
     pass
 
@@ -152,7 +178,7 @@ def bg_pass():
 def main():
     global GAME_STATE
     animation_frame = 0
-    blit_screen(GRID_SIZE, 0)
+    blit_screen(0)
     simple_menu = pygameMenu.TextMenu(SCREEN, window_width=SCREEN_WIDTH, window_height=SCREEN_HEIGHT,
                                       font=pygameMenu.font.FONT_8BIT, font_color=(255, 255, 255), enabled=False,
                                       font_size=20, title='Exit', bgfun=bg_pass, menu_alpha=100,
@@ -185,10 +211,6 @@ def main():
                         PLAYER.facing_left = False
                         PLAYER.facing_up = False
                         PLAYER.key_right = False
-                    if event.key == pygame.K_SPACE:
-                        for ob in GAME_OBJECTS:
-                            if PLAYER.calculate_tile() == ob.grid_pos:
-                                ob.flip_switch()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
                         PLAYER.key_up = True
@@ -201,16 +223,55 @@ def main():
                     if event.key == pygame.K_q:
                         simple_menu.enable()
                         PLAYER.stop()
+                    if event.key == pygame.K_z:
+                        for ob in GAME_OBJECTS:
+                            if PLAYER.calculate_tile() == ob.grid_pos:
+                                ob.flip_switch()
                     if event.key == pygame.K_e:
-                        if PLAYER.calculate_tile() in RESOURCES.can_build:
+                        if PLAYER.calculate_tile() in RESOURCES.unbuilt:
                             GAME_STATE = 1
                             PLAYER.stop()
+                    if event.key == pygame.K_SPACE:
+                        if PLAYER.calculate_tile() == 12:
+                            fish = FISHING.catch()
+                            if fish == 6:
+                                RESOURCES.resources[20] += 1
+                            else:
+                                RESOURCES.resources[fish + 9] += FISHING.catch_quantity
+                        else:
+                            for ob in GAME_OBJECTS:
+                                if PLAYER.calculate_tile() == ob.grid_pos:
+                                    if ob.operation == 1:
+                                        RESOURCES.resources[ob.product1] += 1
+                                    elif ob.operation == 2:
+                                        RESOURCES.resources[ob.product2] += 1
+                                    elif ob.operation == 3:
+                                        RESOURCES.resources[ob.product3] += 1
+                    if event.key == pygame.K_f:
+                        for ob in GAME_OBJECTS:
+                            if PLAYER.calculate_tile() == ob.grid_pos:
+                                ob.switch_operation()
+                    if event.key == pygame.K_1:
+                        for ob in GAME_OBJECTS:
+                            if PLAYER.calculate_tile() == ob.grid_pos:
+                                if RESOURCES.resources[ob.upgrade_type1] >= ob.upgrade_cost1 and \
+                                        RESOURCES.resources[ob.upgrade_type2] >= ob.upgrade_cost2:
+                                    RESOURCES.resources[ob.upgrade_type1] -= ob.upgrade_cost1
+                                    RESOURCES.resources[ob.upgrade_type2] -= ob.upgrade_cost2
+                                    ob.upgrade(1)
+                    if event.key == pygame.K_v:
+                        for ob in GAME_OBJECTS:
+                            if PLAYER.calculate_tile() == ob.grid_pos:
+                                if RESOURCES.resources[ob.fuel1_type] >= 50:
+                                    ob.fuel1 += 50
+                                    RESOURCES.resources[ob.fuel1_type] -= 50
 
             PLAYER.move()
-            blit_screen(GRID_SIZE, animation_frame)
+            blit_screen(animation_frame)
             simple_menu.mainloop()
             for ob in GAME_OBJECTS:
                 ob.produce()
+            transfer_product()
             animation_frame += 1
             if animation_frame > ANIMATION_MAX_CT:
                 animation_frame = 0
@@ -240,7 +301,10 @@ def main():
                                     RESOURCES.resources[build3] -= cost3
                                     RESOURCES.resources[build4] -= cost4
                                     GAME_OBJECTS.append(game_classes.Factory(fact['name']))
+                                    RESOURCES.unbuilt.remove(fact['grid_pos'])
                                     RESOURCES.can_build.remove(fact['grid_pos'])
+                                    for nex in fact['build_next']:
+                                        RESOURCES.can_build.append(constants.factories[nex]['grid_pos'])
                                 break
                         GAME_STATE = 0
         CLOCK.tick(FPS)
