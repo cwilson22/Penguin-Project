@@ -74,25 +74,19 @@ class Factory:
         self.y = constants.factories[name]['y_coord']
         self.grid_pos = constants.factories[name]['grid_pos']
         self.building_num = constants.factories[name]['bldg_num']
+        self.special = constants.factories[name]['special']
 
-        # Product resources quantities and data
-        self.product1_type = constants.factories[name]['product1']
-        self.product2_type = constants.factories[name]['product2']
-        self.product3_type = constants.factories[name]['product3']
-        self.product1 = 0
-        self.product2 = 0
-        self.product3 = 0
-
-        # Fuel resource quantities and data
+        # Fuel/product resource quantities and data
+        self.product = 0
         self.fuel1 = 0
         self.fuel2 = 0
+        self.product_type = constants.factories[name]['product']
         self.fuel1_type = constants.factories[name]['fuel1_type']
         self.fuel2_type = constants.factories[name]['fuel2_type']
         self.fuel1_ipo = constants.factories[name]['fuel1_ipo']
         self.fuel2_ipo = constants.factories[name]['fuel2_ipo']
 
         # Upgrade information, production operation info, and production multipliers
-        self.operation = 1
         self.ops_per_tick = 1
         self.opt_add = constants.factories[name]['ops_per_tick_add']
         self.upgrade_multiplier = constants.factories[name]['upgrade_mult']
@@ -122,23 +116,28 @@ class Factory:
 
     def produce(self):
         if self.level >= 1:
-            if self.operation == 1 and self.fuel1 >= self.fuel1_ipo * self.ops_per_tick:
+            if self.fuel2_type == -1:
+                if self.fuel1 >= self.fuel1_ipo * self.ops_per_tick:
+                    self.fuel1 -= self.fuel1_ipo * self.ops_per_tick
+                    self.product += self.ops_per_tick
+                    self.on = True
+                else:
+                    self.on = False
+                    self.sprite_frame = 0
+            elif self.fuel1 >= self.fuel1_ipo * self.ops_per_tick and self.fuel2 >= self.fuel1_ipo * self.ops_per_tick:
                 self.fuel1 -= self.fuel1_ipo * self.ops_per_tick
-                self.product1 += self.ops_per_tick
-            elif self.operation == 2 and self.fuel2 >= self.fuel1_ipo * self.ops_per_tick:
                 self.fuel2 -= self.fuel2_ipo * self.ops_per_tick
-                self.product2 += self.ops_per_tick
+                self.product += self.ops_per_tick
+                self.on = True
+            else:
+                self.on = False
+                self.sprite_frame = 0
 
     def upgrade(self, amount):
         self.ops_per_tick += self.opt_add * amount
         self.level += amount
         self.upgrade_cost1 *= pow(self.upgrade_multiplier, amount)
         self.upgrade_cost2 *= pow(self.upgrade_multiplier, amount)
-
-    def switch_operation(self):
-        self.operation += 1
-        if self.operation > 3:
-            self.operation = 1
 
     def flip_switch(self):
         self.on = not self.on
@@ -156,7 +155,7 @@ class ResourceManager:
         for fact in constants.factories.values():
             self.unbuilt.append(fact['grid_pos'])
         self.can_build = []
-        self.can_build.append(constants.factories['auto_producer']['grid_pos'])
+        self.can_build.append(constants.factories['wheat_farm']['grid_pos'])
         self.sign = pygame.image.load('sprites/tiles/for_sale_sign.png')
 
     def increase(self, resource, amount):
@@ -178,10 +177,12 @@ class Fishing:
         self.jelly_chance = constants.fishing['jelly_chance']
         self.trophy_chance = 0.0
 
-        self.level = 0
         self.catch_quantity = 1
+        self.cereal_mult = 1
+        self.lure_mult = 1
+        self.line_mult = 1
 
-    def catch(self):
+    def catch(self, with_rod):
         x = random.random()*100
         if x < self.shiner_chance:
             return 1
@@ -194,7 +195,9 @@ class Fishing:
         elif x < self.shiner_chance + self.blenny_chance + self.guppy_chance + self.angel_chance + self.jelly_chance:
             return 5
         else:
-            return 6
+            if with_rod:
+                return 6
+            return 5
 
     def increase_odds(self, fish, amt):
         if fish == 1:

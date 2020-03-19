@@ -163,12 +163,20 @@ def blit_construction_menu():
 
 def transfer_product():
     for ob in GAME_OBJECTS:
-        if ob.product1 > 0:
-            RESOURCES.resources[ob.product1_type] += ob.product1
-            ob.product1 = 0
-        if ob.product2 > 0:
-            RESOURCES.resources[ob.product2_type] += ob.product2
-            ob.product2 = 0
+        if ob.product > 0 and not ob.special:
+            RESOURCES.resources[ob.product_type] += ob.product
+            ob.product = 0
+        elif ob.product > 0 and ob.special:
+            if ob.name == 'cereal_factory':
+                pass
+            elif ob.name == 'net_weaver':
+                pass
+            elif ob.name == 'line_maker':
+                pass
+            elif ob.name == 'lure_maker':
+                pass
+            elif ob.name == 'glassblower':
+                FISHING.increase_odds(6, 2 * FISHING.trophy_chance + 0.01)
 
 
 def bg_pass():
@@ -233,24 +241,15 @@ def main():
                             PLAYER.stop()
                     if event.key == pygame.K_SPACE:
                         if PLAYER.calculate_tile() == 12:
-                            fish = FISHING.catch()
+                            fish = FISHING.catch(True)
                             if fish == 6:
-                                RESOURCES.resources[20] += 1
+                                RESOURCES.resources[11] += 1
                             else:
-                                RESOURCES.resources[fish + 9] += FISHING.catch_quantity
+                                RESOURCES.resources[fish + 5] += FISHING.catch_quantity
                         else:
                             for ob in GAME_OBJECTS:
                                 if PLAYER.calculate_tile() == ob.grid_pos:
-                                    if ob.operation == 1:
-                                        RESOURCES.resources[ob.product1] += 1
-                                    elif ob.operation == 2:
-                                        RESOURCES.resources[ob.product2] += 1
-                                    elif ob.operation == 3:
-                                        RESOURCES.resources[ob.product3] += 1
-                    if event.key == pygame.K_f:
-                        for ob in GAME_OBJECTS:
-                            if PLAYER.calculate_tile() == ob.grid_pos:
-                                ob.switch_operation()
+                                    RESOURCES.resources[ob.product] += 1
                     if event.key == pygame.K_1:
                         for ob in GAME_OBJECTS:
                             if PLAYER.calculate_tile() == ob.grid_pos:
